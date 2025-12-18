@@ -1,2 +1,2 @@
-# lfc-marketview
-LFC's very own (mini) terminal.
+# LFC-MarketView
+LFC's very own (mini) terminal, the LFC MV.
