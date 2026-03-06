@@ -6,3 +6,11 @@ Contributor(s):
 
 Supervisor:
 - Yasemin Ateş
+
+LUISS Finance Club — IT & Quants Department
+
+## Run locally
+```bash
+pip install -r requirements.txt
+streamlit run app.py
+```
