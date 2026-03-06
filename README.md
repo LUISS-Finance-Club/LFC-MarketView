@@ -1,2 +1,8 @@
 # LFC-MarketView
-LFC's very own (mini) terminal, the LFC MV.
+An ineractive dashboard developed by the LUISS Finance Club.
+
+Contributor(s):
+- Cesar Dushimimana
+
+Supervisor:
+- Yasemin Ateş
