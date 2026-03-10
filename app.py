@@ -4,6 +4,14 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 
+# Cesar's TODOs Week 1:
+# - [x] Set up Streamlit page and sidebar controls
+# - [x] Load historical price data with yfinance
+# - [x] Plot candlestick chart with Plotly
+# - [x] Add SMA 20 & 50 (Part 1)
+
+
+
 # ─────────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────────
