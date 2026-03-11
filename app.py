@@ -140,14 +140,13 @@ if show_rsi:
 # ─────────────────────────────────────────────
 
 if show_bb:
-    st.info("PART 2 TODO: Code Bollinger Bands (SMA20 ± 2σ) and add to chart")
+    st.info("Bollinger Bands: Updates pending this week..")
+
     sma, upper_band, lower_band = compute_bollinger(data)
     fig.add_trace(go.Scatter(x=data.index, y=upper_band, name="Upper Band",
                              line=dict(color="red", width=1)))
-    fig.add_trace(go.Scatter(x=data.index, y=sma, name="SMA 20",
-                             line=dict(color="orange", width=1.5)))
     fig.add_trace(go.Scatter(x=data.index, y=lower_band, name="Lower Band",
-                             line=dict(color="green", width=1)))
+                             line=dict(color="green", width=1), fill='tonexty', fillcolor='rgba(0,255,0,0.1)'))
 
 # ─────────────────────────────────────────────
 # MACD
