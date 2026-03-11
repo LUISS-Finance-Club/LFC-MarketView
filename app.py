@@ -73,7 +73,7 @@ with st.sidebar:
 # ─────────────────────────────────────────────
 @st.cache_data
 def load_data(ticker: str, period: str) -> pd.DataFrame:
-    df = yf.download(ticker, period=period, progress=False, auto_adjust=True)
+    df = yf.download(ticker, period=period, interval="1d", progress=False, auto_adjust=True)
     df.columns = [c[0] if isinstance(c, tuple) else c for c in df.columns]
     return df
 
@@ -99,6 +99,25 @@ fig.add_trace(go.Candlestick(
     decreasing_line_color="#ff4444",
 ))
 
+# RSI computation function
+# ─────────────────────────────────────────────
+# RSI FUNCTION
+# ─────────────────────────────────────────────
+def compute_rsi(data, window=14):
+
+    delta = data["Close"].diff()
+
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+
+    avg_gain = gain.rolling(window).mean()
+    avg_loss = loss.rolling(window).mean()
+
+    rs = avg_gain / avg_loss
+
+    rsi = 100 - (100 / (1 + rs))
+
+    return rsi
 # ─────────────────────────────────────────────
 # DUMMY SMA —  REPLACE IN PART 1
 # ─────────────────────────────────────────────
@@ -114,8 +133,36 @@ if show_sma:
 # PLACEHOLDERS — ADD THESE
 # ─────────────────────────────────────────────
 if show_rsi:
-    st.info("PART 2 TODO: Code RSI(14) function and plot below the chart")
+    st.info("Code RSI(14): Updates pending this week..")
+    # Coding the RSI by calling the compute_rsi function and plotting it.
+    data["RSI"] = compute_rsi(data) 
 
+    rsi_fig = go.Figure()
+
+    rsi_fig.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["RSI"],
+            name="RSI (14)",
+            line=dict(color="purple", width=2)
+        )
+    )
+
+    # Overbought line
+    rsi_fig.add_hline(y=70, line_dash="dash", line_color="red")
+
+    # Oversold line
+    rsi_fig.add_hline(y=30, line_dash="dash", line_color="green")
+
+    rsi_fig.update_layout(
+        title="RSI (Relative Strength Index)",
+        template="plotly_dark",
+        height=400,
+        yaxis_title="RSI"
+    )
+
+    st.plotly_chart(rsi_fig, use_container_width=True)
+    
 if show_bb:
     st.info("PART 2 TODO: Code Bollinger Bands (SMA20 ± 2σ) and add to chart")
 
