@@ -103,21 +103,8 @@ fig.add_trace(go.Candlestick(
 # ─────────────────────────────────────────────
 # RSI FUNCTION
 # ─────────────────────────────────────────────
-def compute_rsi(data, window=14):
-
-    delta = data["Close"].diff()
-
-    gain = delta.clip(lower=0)
-    loss = -delta.clip(upper=0)
-
-    avg_gain = gain.rolling(window).mean()
-    avg_loss = loss.rolling(window).mean()
-
-    rs = avg_gain / avg_loss
-
-    rsi = 100 - (100 / (1 + rs))
-
-    return rsi
+# import the compute_rsi function from the rsi_module.py file
+from src.rsi_module import compute_rsi
 # ─────────────────────────────────────────────
 # DUMMY SMA —  REPLACE IN PART 1
 # ─────────────────────────────────────────────
@@ -149,10 +136,10 @@ if show_rsi:
     )
 
     # Overbought line
-    rsi_fig.add_hline(y=70, line_dash="dash", line_color="red")
+    rsi_fig.add_hline(y=70, line_dash="dash", line_color="red", annotation_text="Overbought", annotation_position="top left")
 
     # Oversold line
-    rsi_fig.add_hline(y=30, line_dash="dash", line_color="green")
+    rsi_fig.add_hline(y=30, line_dash="dash", line_color="green", annotation_text="Oversold", annotation_position="bottom left")
 
     rsi_fig.update_layout(
         title="RSI (Relative Strength Index)",
