@@ -4,6 +4,9 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 
+from src.rsi_module import compute_rsi
+from src.bollinger_module import compute_bollinger
+
 # Cesar's TODOs Week 1:
 # - [x] Set up Streamlit page and sidebar controls
 # - [x] Load historical price data with yfinance
@@ -99,15 +102,7 @@ fig.add_trace(go.Candlestick(
     decreasing_line_color="#ff4444",
 ))
 
-# RSI computation function
-# ─────────────────────────────────────────────
-# RSI FUNCTION
-# ─────────────────────────────────────────────
-# import the compute_rsi function from the rsi_module.py file
-from src.rsi_module import compute_rsi
-# ─────────────────────────────────────────────
-# DUMMY SMA —  REPLACE IN PART 1
-# ─────────────────────────────────────────────
+
 if show_sma:
     sma20 = data["Close"].rolling(20).mean()
     sma50 = data["Close"].rolling(50).mean()
@@ -117,7 +112,7 @@ if show_sma:
                              line=dict(color="royalblue", width=1.5)))
 
 # ─────────────────────────────────────────────
-# PLACEHOLDERS — ADD THESE
+# RSI
 # ─────────────────────────────────────────────
 if show_rsi:
     st.info("Code RSI(14): Updates pending this week..")
@@ -139,19 +134,24 @@ if show_rsi:
 
     # Oversold line
     fig.add_hline(y=30, line_dash="dash", line_color="green", annotation_text="Oversold", annotation_position="bottom left")
-
-    # fig.update_layout(
-    #     title="RSI (Relative Strength Index)",
-    #     template="plotly_dark",
-    #     height=400,
-    #     yaxis_title="RSI"
-    # )
-
-    # st.plotly_chart(fig, use_container_width=True)
     
+# ─────────────────────────────────────────────
+# BOLLINGER BANDS
+# ─────────────────────────────────────────────
+
 if show_bb:
     st.info("PART 2 TODO: Code Bollinger Bands (SMA20 ± 2σ) and add to chart")
+    sma, upper_band, lower_band = compute_bollinger(data)
+    fig.add_trace(go.Scatter(x=data.index, y=upper_band, name="Upper Band",
+                             line=dict(color="red", width=1)))
+    fig.add_trace(go.Scatter(x=data.index, y=sma, name="SMA 20",
+                             line=dict(color="orange", width=1.5)))
+    fig.add_trace(go.Scatter(x=data.index, y=lower_band, name="Lower Band",
+                             line=dict(color="green", width=1)))
 
+# ─────────────────────────────────────────────
+# MACD
+# ─────────────────────────────────────────────
 if show_macd:
     st.info("PART 3 TODO: Code MACD (EMA12 - EMA26) + signal line + histogram")
 
