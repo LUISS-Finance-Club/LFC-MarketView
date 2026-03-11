@@ -47,7 +47,7 @@ with st.sidebar:
     st.divider()
 
     st.header("Indicators")
-    st.caption("Toggle on/off — code these in Week 2 & 3")
+    st.caption("MACD + Real Metrics coming soon..")
 
     show_sma   = st.checkbox("SMA  (20 / 50)",     value=True)
     show_rsi   = st.checkbox("RSI  (14)",           value=False)
@@ -66,7 +66,7 @@ with st.sidebar:
     st.header("Your Progress")
     st.markdown("""
 - [x] **Week 1** — Candlesticks + SMA
-- [ ] **Week 2** — RSI + Bollinger
+- [X] **Week 2** — RSI + Bollinger
 - [ ] **Week 3** — MACD + Real Metrics
 - [ ] **Deploy** — Vercel / Streamlit Cloud
     """)
@@ -74,10 +74,10 @@ with st.sidebar:
 # ─────────────────────────────────────────────
 # DATA LOADING
 # ─────────────────────────────────────────────
-@st.cache_data
+@st.cache_data # avoids re-downloading data on every interaction, only when ticker/timeframe changes
 def load_data(ticker: str, period: str) -> pd.DataFrame:
-    df = yf.download(ticker, period=period, interval="1d", progress=False, auto_adjust=True)
-    df.columns = [c[0] if isinstance(c, tuple) else c for c in df.columns]
+    df = yf.download(ticker, period=period, interval="1d", progress=False, auto_adjust=True) 
+    df.columns = [c[0] if isinstance(c, tuple) else c for c in df.columns] 
     return df
 
 data = load_data(ticker, timeframe)
@@ -87,7 +87,7 @@ if data.empty:
     st.stop()
 
 # ─────────────────────────────────────────────
-# MAIN CHART — CANDLESTICKS (TEMPLATE PROVIDES)
+# MAIN CHART — CANDLESTICKS
 # ─────────────────────────────────────────────
 fig = go.Figure()
 
@@ -102,6 +102,9 @@ fig.add_trace(go.Candlestick(
     decreasing_line_color="#ff4444",
 ))
 
+# ─────────────────────────────────────────────
+# SMA
+# ─────────────────────────────────────────────
 
 if show_sma:
     sma20 = data["Close"].rolling(20).mean()
@@ -116,10 +119,7 @@ if show_sma:
 # ─────────────────────────────────────────────
 if show_rsi:
     st.info("Code RSI(14): Updates pending this week..")
-    # Coding the RSI by calling the compute_rsi function and plotting it.
     data["RSI"] = compute_rsi(data) 
-
-
     fig.add_trace(
         go.Scatter(
             x=data.index,
@@ -129,10 +129,7 @@ if show_rsi:
         )
     )
 
-    # Overbought line
     fig.add_hline(y=70, line_dash="dash", line_color="red", annotation_text="Overbought", annotation_position="top left")
-
-    # Oversold line
     fig.add_hline(y=30, line_dash="dash", line_color="green", annotation_text="Oversold", annotation_position="bottom left")
     
 # ─────────────────────────────────────────────
@@ -191,7 +188,7 @@ st.divider()
 # ─────────────────────────────────────────────
 # RAW DATA TABLE
 # ─────────────────────────────────────────────
-with st.expander("View Raw Data (last 20 rows)"):
+with st.expander("View Raw Data (last 20 days)"):
     st.dataframe(data.tail(20), use_container_width=True)
 
 # ─────────────────────────────────────────────
