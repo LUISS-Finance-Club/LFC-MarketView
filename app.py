@@ -124,9 +124,8 @@ if show_rsi:
     # Coding the RSI by calling the compute_rsi function and plotting it.
     data["RSI"] = compute_rsi(data) 
 
-    rsi_fig = go.Figure()
 
-    rsi_fig.add_trace(
+    fig.add_trace(
         go.Scatter(
             x=data.index,
             y=data["RSI"],
@@ -136,19 +135,19 @@ if show_rsi:
     )
 
     # Overbought line
-    rsi_fig.add_hline(y=70, line_dash="dash", line_color="red", annotation_text="Overbought", annotation_position="top left")
+    fig.add_hline(y=70, line_dash="dash", line_color="red", annotation_text="Overbought", annotation_position="top left")
 
     # Oversold line
-    rsi_fig.add_hline(y=30, line_dash="dash", line_color="green", annotation_text="Oversold", annotation_position="bottom left")
+    fig.add_hline(y=30, line_dash="dash", line_color="green", annotation_text="Oversold", annotation_position="bottom left")
 
-    rsi_fig.update_layout(
-        title="RSI (Relative Strength Index)",
-        template="plotly_dark",
-        height=400,
-        yaxis_title="RSI"
-    )
+    # fig.update_layout(
+    #     title="RSI (Relative Strength Index)",
+    #     template="plotly_dark",
+    #     height=400,
+    #     yaxis_title="RSI"
+    # )
 
-    st.plotly_chart(rsi_fig, use_container_width=True)
+    # st.plotly_chart(fig, use_container_width=True)
     
 if show_bb:
     st.info("PART 2 TODO: Code Bollinger Bands (SMA20 ± 2σ) and add to chart")
