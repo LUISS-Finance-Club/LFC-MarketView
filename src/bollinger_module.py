@@ -9,4 +9,4 @@ def compute_bollinger(data, window=20):
     upper_band = sma + (2 * std)
     lower_band = sma - (2 * std)
 
-    return sma, upper_band, lower_band
+    return upper_band, lower_band

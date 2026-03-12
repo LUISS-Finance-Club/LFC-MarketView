@@ -7,14 +7,6 @@ import numpy as np
 from src.rsi_module import compute_rsi
 from src.bollinger_module import compute_bollinger
 
-# Cesar's TODOs Week 1:
-# - [x] Set up Streamlit page and sidebar controls
-# - [x] Load historical price data with yfinance
-# - [x] Plot candlestick chart with Plotly
-# - [x] Add SMA 20 & 50 (Part 1)
-
-
-
 # ─────────────────────────────────────────────
 # PAGE CONFIG
 # ─────────────────────────────────────────────
@@ -109,6 +101,8 @@ fig.add_trace(go.Candlestick(
 if show_sma:
     sma20 = data["Close"].rolling(20).mean()
     sma50 = data["Close"].rolling(50).mean()
+    data["SMA20"], data["SMA50"] = sma20, sma50
+
     fig.add_trace(go.Scatter(x=data.index, y=sma20, name="SMA 20",
                              line=dict(color="orange", width=1.5)))
     fig.add_trace(go.Scatter(x=data.index, y=sma50, name="SMA 50",
@@ -138,8 +132,8 @@ if show_rsi:
 
 if show_bb:
     st.info("Bollinger Bands: Updates pending this week..")
-
-    sma, upper_band, lower_band = compute_bollinger(data)
+    data["BB_Upper Band"], data["BB_Lower Band"] = compute_bollinger(data)
+    upper_band, lower_band = compute_bollinger(data)
     fig.add_trace(go.Scatter(x=data.index, y=upper_band, name="Upper Band",
                              line=dict(color="red", width=1)))
     fig.add_trace(go.Scatter(x=data.index, y=lower_band, name="Lower Band",
