@@ -1,10 +1,12 @@
 import streamlit as st
 import yfinance as yf
 import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import pandas as pd
 import numpy as np
 
 from src.indicators import compute_rsi, compute_bollinger, compute_macd
+from src.metrics import compute_metrics
 
 # ─────────────────────────────────────────────
 # PAGE CONFIG
@@ -23,27 +25,32 @@ st.caption("LUISS Finance Club — IT & Quants Department")
 st.divider()
 
 # ─────────────────────────────────────────────
-# SIDEBAR — CONTROLS
+# SIDEBAR
 # ─────────────────────────────────────────────
 with st.sidebar:
+
     st.header("Controls")
 
-    ticker = st.text_input("Ticker", value="AAPL", help="e.g. AAPL, SPY, BTC-USD, TSLA")
+    ticker = st.text_input(
+        "Ticker",
+        value="AAPL",
+        help="Examples: AAPL, TSLA, SPY, BTC-USD"
+    )
+
     timeframe = st.selectbox(
         "Timeframe",
-        options=["1mo", "3mo", "6mo", "1y", "2y", "5y"],
+        ["1mo","3mo","6mo","1y","2y","5y"],
         index=3
     )
 
     st.divider()
 
     st.header("Indicators")
-    st.caption("MACD + Real Metrics coming soon..")
 
-    show_sma   = st.checkbox("SMA  (20 / 50)",     value=True)
-    show_rsi   = st.checkbox("RSI  (14)",           value=False)
-    show_bb    = st.checkbox("Bollinger Bands",     value=False)
-    show_macd  = st.checkbox("MACD (12, 26, 9)",   value=False)
+    show_sma = st.checkbox("SMA (20 / 50)", True)
+    show_rsi = st.checkbox("RSI (14)", False)
+    show_bb = st.checkbox("Bollinger Bands", False)
+    show_macd = st.checkbox("MACD (12,26,9)", False)
 
     st.divider()
 
@@ -51,174 +58,309 @@ with st.sidebar:
         st.cache_data.clear()
         st.rerun()
 
-    st.divider()
-
-    # ── CESAR'S PROGRESS CHECKLIST ──
-    st.header("Your Progress")
-    st.markdown("""
-- [x] **Week 1** — Candlesticks + SMA
-- [X] **Week 2** — RSI + Bollinger
-- [ ] **Week 3** — MACD + Real Metrics
-- [ ] **Deploy** — Vercel / Streamlit Cloud
-    """)
-
 # ─────────────────────────────────────────────
 # DATA LOADING
 # ─────────────────────────────────────────────
-@st.cache_data # avoids re-downloading data on every interaction, only when ticker/timeframe changes
-def load_data(ticker: str, period: str) -> pd.DataFrame:
-    df = yf.download(ticker, period=period, interval="1d", progress=False, auto_adjust=True) 
-    df.columns = [c[0] if isinstance(c, tuple) else c for c in df.columns] 
+@st.cache_data
+def load_data(ticker, period):
+
+    df = yf.download(
+        ticker,
+        period=period,
+        interval="1d",
+        auto_adjust=True,
+        progress=False
+    )
+
+    df.columns = [c[0] if isinstance(c, tuple) else c for c in df.columns]
+
     return df
 
+
 data = load_data(ticker, timeframe)
+metrics = compute_metrics(data, ticker)
 
 if data.empty:
-    st.error("No data found. Try AAPL, SPY, BTC-USD, TSLA")
+    st.error("No data found. Try AAPL, SPY, TSLA, BTC-USD")
     st.stop()
 
 # ─────────────────────────────────────────────
-# MAIN CHART — CANDLESTICKS
+# DYNAMIC CHART LAYOUT
 # ─────────────────────────────────────────────
-fig = go.Figure()
 
-fig.add_trace(go.Candlestick(
-    x=data.index,
-    open=data["Open"],
-    high=data["High"],
-    low=data["Low"],
-    close=data["Close"],
-    name="Price",
-    increasing_line_color="#00cc88",
-    decreasing_line_color="#ff4444",
-))
+# ─────────────────────────────────────────────
+# DYNAMIC CHART LAYOUT
+# ─────────────────────────────────────────────
+
+rows = 2
+row_heights = [0.6, 0.15]   # Price + Volume
+
+if show_rsi:
+    rows += 1
+    row_heights.append(0.125)
+
+if show_macd:
+    rows += 1
+    row_heights.append(0.125)
+
+fig = make_subplots(
+    rows=rows,
+    cols=1,
+    shared_xaxes=True,
+    vertical_spacing=0.03,
+    row_heights=row_heights
+)
+
+price_row = 1
+volume_row = 2
+current_row = 3
+
+# ─────────────────────────────────────────────
+# PRICE CHART
+# ─────────────────────────────────────────────
+
+fig.add_trace(
+    go.Candlestick(
+        x=data.index,
+        open=data["Open"],
+        high=data["High"],
+        low=data["Low"],
+        close=data["Close"],
+        name="Price",
+        increasing_line_color="#00cc88",
+        decreasing_line_color="#ff4444"
+    ),
+    row=price_row,
+    col=1
+)
 
 # ─────────────────────────────────────────────
 # SMA
 # ─────────────────────────────────────────────
 
 if show_sma:
-    sma20 = data["Close"].rolling(20).mean()
-    sma50 = data["Close"].rolling(50).mean()
-    data["SMA20"], data["SMA50"] = sma20, sma50
 
-    fig.add_trace(go.Scatter(x=data.index, y=sma20, name="SMA 20",
-                             line=dict(color="orange", width=1.5)))
-    fig.add_trace(go.Scatter(x=data.index, y=sma50, name="SMA 50",
-                             line=dict(color="royalblue", width=1.5)))
+    data["SMA20"] = data["Close"].rolling(20).mean()
+    data["SMA50"] = data["Close"].rolling(50).mean()
+
+    fig.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["SMA20"],
+            name="SMA 20",
+            line=dict(color="orange", width=1.5)
+        ),
+        row=price_row,
+        col=1
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["SMA50"],
+            name="SMA 50",
+            line=dict(color="royalblue", width=1.5)
+        ),
+        row=price_row,
+        col=1
+    )
+
+# ─────────────────────────────────────────────
+# BOLLINGER BANDS
+# ─────────────────────────────────────────────
+
+if show_bb:
+
+    upper, lower = compute_bollinger(data)
+
+    fig.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=upper,
+            name="BB Upper",
+            line=dict(color="gray", width=1)
+        ),
+        row=price_row,
+        col=1
+    )
+
+    fig.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=lower,
+            name="BB Lower",
+            line=dict(color="gray", width=1),
+            fill="tonexty",
+            fillcolor="rgba(128,128,128,0.15)"
+        ),
+        row=price_row,
+        col=1
+    )
+
+
+# ─────────────────────────────────────────────
+# Volume Bars
+# ─────────────────────────────────────────────
+
+volume_colors = np.where(data["Close"] >= data["Open"], "#00cc88", "#ff4444")
+
+fig.add_trace(
+    go.Bar(
+        x=data.index,
+        y=data["Volume"],
+        name="Volume",
+        marker_color=volume_colors,
+        opacity=0.7
+    ),
+    row=volume_row,
+    col=1
+)
 
 # ─────────────────────────────────────────────
 # RSI
 # ─────────────────────────────────────────────
+
 if show_rsi:
-    st.info("Code RSI(14): Updates pending this week..")
-    data["RSI"] = compute_rsi(data) 
+
+    data["RSI"] = compute_rsi(data)
+
     fig.add_trace(
         go.Scatter(
             x=data.index,
             y=data["RSI"],
             name="RSI (14)",
             line=dict(color="purple", width=2)
-        )
+        ),
+        row=current_row,
+        col=1
     )
 
-    fig.add_hline(y=70, line_dash="dash", line_color="red", annotation_text="Overbought", annotation_position="top left")
-    fig.add_hline(y=30, line_dash="dash", line_color="green", annotation_text="Oversold", annotation_position="bottom left")
-    
-# ─────────────────────────────────────────────
-# BOLLINGER BANDS
-# ─────────────────────────────────────────────
+    fig.add_hline(y=70, line_dash="dash", line_color="red", row=current_row, col=1)
+    fig.add_hline(y=30, line_dash="dash", line_color="green", row=current_row, col=1)
 
-if show_bb:
-    st.info("Bollinger Bands: Updates pending this week..")
-    data["BB_Upper Band"], data["BB_Lower Band"] = compute_bollinger(data)
-    upper_band, lower_band = compute_bollinger(data)
-    fig.add_trace(go.Scatter(x=data.index, y=upper_band, name="Upper Band",
-                             line=dict(color="red", width=1)))
-    fig.add_trace(go.Scatter(x=data.index, y=lower_band, name="Lower Band",
-                             line=dict(color="green", width=1), fill='tonexty', fillcolor='rgba(0,255,0,0.1)'))
+    fig.update_yaxes(range=[0,100], row=current_row, col=1)
+
+    current_row += 1
 
 # ─────────────────────────────────────────────
 # MACD
 # ─────────────────────────────────────────────
 if show_macd:
-    st.info("PART 3 TODO: Code MACD (EMA12 - EMA26) + signal line + histogram")
-    data["MACD"], data["Signal"], data["MACD_Histogram"] = compute_macd(data)
 
+    data["MACD"], data["MACD_SIGNAL"], data["MACD_HIST"] = compute_macd(data)
 
-    # MACD line
     fig.add_trace(
         go.Scatter(
             x=data.index,
             y=data["MACD"],
             name="MACD",
             line=dict(color="cyan", width=2)
-        )
+        ),
+        row=current_row,
+        col=1
     )
 
-    # Signal line
     fig.add_trace(
         go.Scatter(
             x=data.index,
-            y=data["Signal"],
+            y=data["MACD_SIGNAL"],
             name="Signal",
             line=dict(color="orange", width=2)
-        )
+        ),
+        row=current_row,
+        col=1
     )
 
-    # Histogram
     fig.add_trace(
         go.Bar(
             x=data.index,
-            y=data["MACD_Histogram"],
+            y=data["MACD_HIST"],
             name="Histogram",
-            marker_color="gray"
-        )
+            marker_color="gray",
+            opacity=0.5
+        ),
+        row=current_row,
+        col=1
     )
 
-
-
 # ─────────────────────────────────────────────
-# CHART LAYOUT
+# LAYOUT
 # ─────────────────────────────────────────────
+
 fig.update_layout(
-    title=f"{ticker.upper()}   ·   {timeframe}",
-    xaxis_title="Date",
-    yaxis_title="Price (USD)",
-    height=560,
+
+    title=f"{ticker.upper()} · {timeframe}",
     template="plotly_dark",
+    height=900,
     hovermode="x unified",
     xaxis_rangeslider_visible=False,
-    legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1)
+
+    legend=dict(
+        orientation="h",
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1
+    )
+)
+# ─────────────────────────────────────────────
+# RENDER CHART
+# ─────────────────────────────────────────────
+
+st.plotly_chart(
+    fig,
+    use_container_width=True,
+    key="market_chart"
 )
 
-st.plotly_chart(fig, use_container_width=True)
-
 st.divider()
 
 # ─────────────────────────────────────────────
-# LIVE METRICS ROW — DUMMY VALUES
-# REPLACE WITH REAL FORMULAS IN PART 3
+# LIVE QUANT METRICS
 # ─────────────────────────────────────────────
+
 st.subheader("Live Quant Metrics")
-st.caption("Currently showing dummy values — replace with real formulas in Part 3")
+
+latest_rsi = None
+if "RSI" in data.columns:
+    latest_rsi = round(data["RSI"].iloc[-1], 2)
 
 m1, m2, m3, m4, m5 = st.columns(5)
-m1.metric("Sharpe Ratio",    "1.23",   help="(Annualised return - Rf) / σ")
-m2.metric("Volatility",      "24.1%",  help="Annualised std dev of daily returns")
-m3.metric("RSI (14)",        "68",     help="Relative Strength Index")
-m4.metric("Beta",            "1.12",   help="Covariance(asset, SPY) / Variance(SPY)")
-m5.metric("Max Drawdown",    "-12.3%", help="Largest peak-to-trough decline")
 
-st.divider()
+m1.metric(
+    "Sharpe Ratio",
+    f"{metrics['sharpe']:.2f}",
+    help="Risk-adjusted return (annualized)"
+)
 
-# ─────────────────────────────────────────────
-# RAW DATA TABLE
-# ─────────────────────────────────────────────
-with st.expander("View Raw Data (last 20 days)"):
-    st.dataframe(data.tail(20), use_container_width=True)
+m2.metric(
+    "Volatility",
+    f"{metrics['volatility']*100:.2f}%",
+    help="Annualized standard deviation of returns"
+)
+
+m3.metric(
+    "RSI (14)",
+    latest_rsi if latest_rsi else "—",
+    help="Momentum indicator"
+)
+
+m4.metric(
+    "Beta vs SPY",
+    f"{metrics['beta']:.2f}",
+    help="Sensitivity to market movements"
+)
+
+m5.metric(
+    "Max Drawdown",
+    f"{metrics['max_drawdown']*100:.2f}%",
+    help="Largest historical loss from peak"
+)
 
 # ─────────────────────────────────────────────
 # FOOTER
 # ─────────────────────────────────────────────
-st.caption("Data: Yahoo Finance via yfinance · Template by LUISS Finance Club IT & Quants Department")
+
+st.caption(
+    "Data: Yahoo Finance via yfinance · Built for LUISS Finance Club"
+)
