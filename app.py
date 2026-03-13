@@ -4,8 +4,7 @@ import plotly.graph_objects as go
 import pandas as pd
 import numpy as np
 
-from src.rsi_module import compute_rsi
-from src.bollinger_module import compute_bollinger
+from src.indicators import compute_rsi, compute_bollinger, compute_macd
 
 # ─────────────────────────────────────────────
 # PAGE CONFIG
@@ -144,6 +143,40 @@ if show_bb:
 # ─────────────────────────────────────────────
 if show_macd:
     st.info("PART 3 TODO: Code MACD (EMA12 - EMA26) + signal line + histogram")
+    data["MACD"], data["Signal"], data["MACD_Histogram"] = compute_macd(data)
+
+
+    # MACD line
+    fig.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["MACD"],
+            name="MACD",
+            line=dict(color="cyan", width=2)
+        )
+    )
+
+    # Signal line
+    fig.add_trace(
+        go.Scatter(
+            x=data.index,
+            y=data["Signal"],
+            name="Signal",
+            line=dict(color="orange", width=2)
+        )
+    )
+
+    # Histogram
+    fig.add_trace(
+        go.Bar(
+            x=data.index,
+            y=data["MACD_Histogram"],
+            name="Histogram",
+            marker_color="gray"
+        )
+    )
+
+
 
 # ─────────────────────────────────────────────
 # CHART LAYOUT
