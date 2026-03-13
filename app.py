@@ -13,7 +13,7 @@ from src.metrics import compute_metrics
 # ─────────────────────────────────────────────
 st.set_page_config(
     page_title="LFC MarketView",
-    page_icon="LOGO",
+    page_icon="📈",
     layout="wide"
 )
 
@@ -25,7 +25,7 @@ st.caption("LUISS Finance Club — IT & Quants Department")
 st.divider()
 
 # ─────────────────────────────────────────────
-# SIDEBAR
+# SIDEBAR CONTROLS
 # ─────────────────────────────────────────────
 with st.sidebar:
 
@@ -48,8 +48,8 @@ with st.sidebar:
     st.header("Indicators")
 
     show_sma = st.checkbox("SMA (20 / 50)", True)
-    show_rsi = st.checkbox("RSI (14)", False)
     show_bb = st.checkbox("Bollinger Bands", False)
+    show_rsi = st.checkbox("RSI (14)", False)
     show_macd = st.checkbox("MACD (12,26,9)", False)
 
     st.divider()
@@ -78,22 +78,21 @@ def load_data(ticker, period):
 
 
 data = load_data(ticker, timeframe)
-metrics = compute_metrics(data, ticker)
 
 if data.empty:
-    st.error("No data found. Try AAPL, SPY, TSLA, BTC-USD")
+    st.error("No data found. Try AAPL, TSLA, SPY, BTC-USD")
     st.stop()
 
 # ─────────────────────────────────────────────
-# DYNAMIC CHART LAYOUT
+# COMPUTE METRICS
 # ─────────────────────────────────────────────
+metrics = compute_metrics(data, ticker)
 
 # ─────────────────────────────────────────────
-# DYNAMIC CHART LAYOUT
+# DYNAMIC CHART STRUCTURE
 # ─────────────────────────────────────────────
-
 rows = 2
-row_heights = [0.6, 0.15]   # Price + Volume
+row_heights = [0.6, 0.15]
 
 if show_rsi:
     rows += 1
@@ -116,9 +115,8 @@ volume_row = 2
 current_row = 3
 
 # ─────────────────────────────────────────────
-# PRICE CHART
+# PRICE (CANDLESTICKS)
 # ─────────────────────────────────────────────
-
 fig.add_trace(
     go.Candlestick(
         x=data.index,
@@ -137,7 +135,6 @@ fig.add_trace(
 # ─────────────────────────────────────────────
 # SMA
 # ─────────────────────────────────────────────
-
 if show_sma:
 
     data["SMA20"] = data["Close"].rolling(20).mean()
@@ -168,7 +165,6 @@ if show_sma:
 # ─────────────────────────────────────────────
 # BOLLINGER BANDS
 # ─────────────────────────────────────────────
-
 if show_bb:
 
     upper, lower = compute_bollinger(data)
@@ -197,12 +193,14 @@ if show_bb:
         col=1
     )
 
-
 # ─────────────────────────────────────────────
-# Volume Bars
+# VOLUME
 # ─────────────────────────────────────────────
-
-volume_colors = np.where(data["Close"] >= data["Open"], "#00cc88", "#ff4444")
+volume_colors = np.where(
+    data["Close"] >= data["Open"],
+    "#00cc88",
+    "#ff4444"
+)
 
 fig.add_trace(
     go.Bar(
@@ -219,7 +217,6 @@ fig.add_trace(
 # ─────────────────────────────────────────────
 # RSI
 # ─────────────────────────────────────────────
-
 if show_rsi:
 
     data["RSI"] = compute_rsi(data)
@@ -284,17 +281,14 @@ if show_macd:
     )
 
 # ─────────────────────────────────────────────
-# LAYOUT
+# CHART LAYOUT
 # ─────────────────────────────────────────────
-
 fig.update_layout(
-
     title=f"{ticker.upper()} · {timeframe}",
     template="plotly_dark",
     height=900,
     hovermode="x unified",
     xaxis_rangeslider_visible=False,
-
     legend=dict(
         orientation="h",
         yanchor="bottom",
@@ -303,10 +297,10 @@ fig.update_layout(
         x=1
     )
 )
+
 # ─────────────────────────────────────────────
 # RENDER CHART
 # ─────────────────────────────────────────────
-
 st.plotly_chart(
     fig,
     use_container_width=True,
@@ -318,49 +312,37 @@ st.divider()
 # ─────────────────────────────────────────────
 # LIVE QUANT METRICS
 # ─────────────────────────────────────────────
-
 st.subheader("Live Quant Metrics")
 
 latest_rsi = None
 if "RSI" in data.columns:
-    latest_rsi = round(data["RSI"].iloc[-1], 2)
+    latest_rsi = round(data["RSI"].iloc[-1],2)
 
 m1, m2, m3, m4, m5 = st.columns(5)
 
-m1.metric(
-    "Sharpe Ratio",
-    f"{metrics['sharpe']:.2f}",
-    help="Risk-adjusted return (annualized)"
-)
+m1.metric("Sharpe Ratio", f"{metrics['sharpe']:.2f}")
+m2.metric("Volatility", f"{metrics['volatility']*100:.2f}%")
+m3.metric("RSI (14)", latest_rsi if latest_rsi else "—")
+m4.metric("Beta vs SPY", f"{metrics['beta']:.2f}")
+m5.metric("Max Drawdown", f"{metrics['max_drawdown']*100:.2f}%")
 
-m2.metric(
-    "Volatility",
-    f"{metrics['volatility']*100:.2f}%",
-    help="Annualized standard deviation of returns"
-)
+st.divider()
 
-m3.metric(
-    "RSI (14)",
-    latest_rsi if latest_rsi else "—",
-    help="Momentum indicator"
-)
+# ─────────────────────────────────────────────
+# RAW DATA TABLE
+# ─────────────────────────────────────────────
+with st.expander("View Raw Data (last 20 days)"):
 
-m4.metric(
-    "Beta vs SPY",
-    f"{metrics['beta']:.2f}",
-    help="Sensitivity to market movements"
-)
+    st.dataframe(
+        data.tail(20),
+        use_container_width=True
+    )
 
-m5.metric(
-    "Max Drawdown",
-    f"{metrics['max_drawdown']*100:.2f}%",
-    help="Largest historical loss from peak"
-)
+st.divider()
 
 # ─────────────────────────────────────────────
 # FOOTER
 # ─────────────────────────────────────────────
-
 st.caption(
     "Data: Yahoo Finance via yfinance · Built for LUISS Finance Club"
 )
