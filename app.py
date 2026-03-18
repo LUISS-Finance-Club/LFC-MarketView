@@ -84,7 +84,7 @@ if data.empty:
     st.stop()
 
 # ─────────────────────────────────────────────
-# COMPUTE METRICS
+# COMPUTE METRICS: volatility, sharpe, beta, max drawdown
 # ─────────────────────────────────────────────
 metrics = compute_metrics(data, ticker)
 
@@ -133,7 +133,7 @@ fig.add_trace(
 )
 
 # ─────────────────────────────────────────────
-# SMA
+# SMA: SIMPLE MOVING AVERAGE 20 & 50
 # ─────────────────────────────────────────────
 if show_sma:
 
@@ -163,7 +163,7 @@ if show_sma:
     )
 
 # ─────────────────────────────────────────────
-# BOLLINGER BANDS
+# BOLLINGER BANDS:Based on 20-day SMA and standard deviation
 # ─────────────────────────────────────────────
 if show_bb:
 
@@ -194,7 +194,7 @@ if show_bb:
     )
 
 # ─────────────────────────────────────────────
-# VOLUME
+# VOLUME: bars colored by price movement (green if close >= open, red if close < open)
 # ─────────────────────────────────────────────
 volume_colors = np.where(
     data["Close"] >= data["Open"],
@@ -215,7 +215,7 @@ fig.add_trace(
 )
 
 # ─────────────────────────────────────────────
-# RSI
+# RSI: Relative Strength Index, measures overbought/oversold conditions
 # ─────────────────────────────────────────────
 if show_rsi:
 
@@ -240,7 +240,7 @@ if show_rsi:
     current_row += 1
 
 # ─────────────────────────────────────────────
-# MACD
+# MACD: Moving Average Convergence Divergence, trend-following momentum indicator
 # ─────────────────────────────────────────────
 if show_macd:
 
@@ -310,7 +310,7 @@ st.plotly_chart(
 st.divider()
 
 # ─────────────────────────────────────────────
-# LIVE QUANT METRICS
+# LIVE QUANT METRICS: Sharpe Ratio, Volatility, Beta vs SPY, Max Drawdown 
 # ─────────────────────────────────────────────
 st.subheader("Live Quant Metrics")
 
@@ -329,7 +329,7 @@ m5.metric("Max Drawdown", f"{metrics['max_drawdown']*100:.2f}%")
 st.divider()
 
 # ─────────────────────────────────────────────
-# RAW DATA TABLE
+# RAW DATA TABLE: Recent 20 days
 # ─────────────────────────────────────────────
 with st.expander("View Raw Data (last 20 days)"):
 
